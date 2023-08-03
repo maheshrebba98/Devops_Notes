@@ -553,6 +553,18 @@ resource "aws_instance" "one" {
   }
 }
 
+resource "aws_ebs_volume" "two" {
+availability_zone = "us-east-1b"
+size = 12
+tags = {
+Name = "terraform-ebs"
+}
+}
+
+resource "aws_s3_bucket" "three" {
+bucket = "maheshuma98terra-swiggy"
+}
+
 
 LOOPS:
 
