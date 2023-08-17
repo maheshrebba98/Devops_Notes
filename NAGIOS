@@ -19,10 +19,86 @@ fisrt commercial version: 2009
 nagios renamed as nagios core: 2012
 free versio and paid also available.
 
-
 ARCHITECTURE:
 its a client server architecture.
 all nodes connected to nagios main server.
 the nodes info will be store on db.
 on node we need to install agent (NRPE)
+
+
+# NAGIOS SETUP INFO
+#  NAGIOS SERVER
+# UPDATE
+sudo apt update -y
+sudo apt upgrade -y
+sudo -i
+# PRE-REQUESITES
+apt install wget vim unzip curl gcc openssl build-essential libgd-dev libssl-dev libapache2-mod-php php-gd php apache2 -y
+#INSTALL NAGIOS CORE:
+export VER="4.4.6"
+curl -SL https://github.com/NagiosEnterprises/nagioscore/releases/download/nagios-$VER/nagios-$VER.tar.gz | tar -xzf -
+cd /root/nagios-4.4.6/
+#TO COMPILE:
+./configure
+make all
+make install-groups-users
+usermod -a -G nagios nagios
+make install
+make install-init
+make install-config
+make install-commandmode
+make install-webconf
+a2enmod rewrite cgi
+systemctl restart apache2
+make install-exfoliation
+make install-classicui
+# INSTALL NAGIOS PLUGINS
+VER="2.3.3"
+#TO GET NAGIOS PLUGINS:
+curl -SL https://github.com/nagios-plugins/nagios-plugins/releases/download/release-$VER/nagios-plugins-$VER.tar.gz | tar -xzf -
+cd nagios-plugins-2.3.3/
+./configure
+make install
+#Create a nagiosadmin account for logging into the Nagios web interface. Note the password you need it while login to Nagios web console.
+sudo htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+sudo service apache2 restart
+sudo /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+systemctl enable --now nagios
+systemctl status nagios
+####################################
+# WORKER NODE SERVER(SWIGGY) -CLIENT
+# UPDATE
+sudo apt update -y
+sudo apt upgrade -y
+sudo -i
+# INSTALL NRPE PLUGIN
+apt install nagios-plugins nagios-nrpe-server -y
+systemctl status nagios-nrpe-server
+# vim /etc/nagios/nrpe.cfg (Enter Nagios Server Public IP #:61)
+  # systemctl restart nagios-nrpe-server
+  # /usr/sbin/nrpe -V /etc/nagios/nrpe.cfg -f
+#########################################
+# NAGIOS SERVER
+  # sudo vim /usr/local/nagios/etc/nagios.cfg (uncomment of Line #:51)
+  # sudo mkdir -p /usr/local/nagios/etc/servers
+  # sudo vim /usr/local/nagios/etc/servers/host.cfg
+  /* copy the content 
+    define host {
+            use                       linux-server
+            host_name                 swiggy
+            alias                     Apache server
+            address                   swiggy public_ip
+            max_check_attempts        5
+            check_perid               24x7
+            notification_interval     30
+            notification_period       24x7
+
+     } 
+  */
+  # systemctl restart nagios
+  # ufw allow 5666/tcp
+   # ufw reload
+   # ufw status
+  # sudo /usr/local/nagios/bin/nagios -v /usr/local/nagio/etc/nagios.cfg 
+
 
